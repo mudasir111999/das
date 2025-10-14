@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Synthetic Data Agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- cache-bust to avoid stale CSS -->
+  <link href="/static/styles.css?v=5" rel="stylesheet" />
+</head>
+<body>
+  <!-- PINNED wrapper: page never scrolls -->
+  <div class="viewport">
+    <!-- Top Nav -->
+    <header class="nav">
+      <div class="nav__inner">
+        <div class="nav__brand">
+          <div class="dot"></div>
+          <span class="brand-text">Synthetic&nbsp;Data&nbsp;Agent</span>
+        </div>
+        <nav class="nav__actions" style="display:flex; gap:8px;">
+          <button id="beginConvoBtn" class="btn btn--primary">Conversational</button>
+          <button id="beginFullBtn" class="btn btn--secondary">Full&nbsp;Prompt</button>
+          <!-- Optional top nav button to open drawer -->
+          <button id="openValidationBtn" class="btn btn--ghost">Validation</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero (compact; hidden on short screens) -->
+  
+
+    <!-- Main: Chat + Outputs -->
+    <main class="main">
+      <div class="grid">
+        <!-- Chat panel -->
+        <section class="card card--panel">
+          <div class="panel__header">
+            <h2>Conversation</h2>
+            <div id="typing" class="typing hidden">
+              <span class="spinner"></span> Agent is thinking…
+            </div>
+          </div>
+
+          <div id="chat" class="panel__body"><!-- messages injected by app.js --></div>
+
+          <div class="panel__footer">
+            <div class="composer">
+              <textarea id="msg" class="composer__input" rows="1"
+                placeholder="Type your message…  (Enter to send • Shift+Enter for newline)"></textarea>
+              <button id="sendBtn" class="btn btn--secondary">Send</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right column: Latest Run Outputs (CSVs) -->
+        <section class="card card--panel">
+          <div class="panel__header">
+            <h2>Generated Outputs</h2>
+            <button id="refreshBtn" class="btn btn--ghost" title="Refresh">↻</button>
+          </div>
+
+
+          <div class="table">
+            <div class="table__head">
+              <div>File</div>
+              <div class="right">Action</div>
+            </div>
+            <div id="files" class="table__body"><!-- rows injected by app.js --></div>
+          </div>
+
+          <div class="panel__note">Only the latest run’s CSVs are shown.</div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    
+
+    <!-- Right-edge sidebar handle -->
+    <button id="validationTab" class="drawer-tab" aria-label="Open Validation">Validation</button>
+
+    <!-- Slide-over Drawer + Backdrop -->
+    <div id="drawerBackdrop" class="drawer-backdrop hidden" aria-hidden="true"></div>
+    <aside id="validationDrawer" class="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
+      <div class="drawer__header">
+        <h2 id="drawerTitle">Validation Report</h2>
+        <div class="drawer__actions">
+          <button id="refreshValidationBtn" class="btn btn--ghost" title="Refresh">↻</button>
+          <button id="closeValidationBtn" class="btn btn--secondary">Close</button>
+        </div>
+      </div>
+      <div id="validationDrawerBody" class="drawer__body md-view">
+        <div class="muted">No validation report yet.</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- cache-bust to avoid stale JS -->
+  <script src="/static/app.js?v=5"></script>
+</body>
+</html>

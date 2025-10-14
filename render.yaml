@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: synthetic-data-agents
+    env: python
+    plan: starter
+    branch: main
+    buildCommand: |
+      pip install -r requirements.txt
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MOTHERDUCK_TOKEN
+        sync: false
+      - key: MD_DUCKDB_URL
+        value: md:my_db
+      - key: UV_PYTHON
+        value: "3.12"
+    disk:
+      name: runs-data
+      mountPath: /data
+      sizeGB: 5

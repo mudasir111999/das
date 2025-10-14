@@ -1,0 +1,14 @@
+litellm
+pydantic
+sqlalchemy
+uvicorn[standard]
+smolagents[mcp]
+fastapi==0.119.0
+uvicorn==0.37.0
+python-dotenv==1.1.1
+duckdb==1.4.1
+pandas==2.3.3
+smolagents==1.22.0
+mcp==1.17.0
+mcpadapt==0.1.17
+openai==2.3.0
