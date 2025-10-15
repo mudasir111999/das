@@ -7,6 +7,15 @@ const beginConvoBtn = document.getElementById("beginConvoBtn");
 const beginFullBtn = document.getElementById("beginFullBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const filesEl = document.getElementById("files");
+const runsBackBtn = document.getElementById("runsBackBtn");
+const runsFwdBtn = document.getElementById("runsFwdBtn");
+const runsUpBtn = document.getElementById("runsUpBtn");
+const runsBreadcrumb = document.getElementById("runsBreadcrumb");
+
+// Explorer state
+let runsHistory = [""]; // start at root of runs/
+let historyIndex = 0;
+let cwd = "";
 const typingEl = document.getElementById("typing");
 const composerEl = document.querySelector(".composer");
 
@@ -139,30 +148,128 @@ async function sendMessage() {
 /* Files list: newest run only (backend already filters) */
 async function refreshFiles() {
   try {
-    const res = await fetch("/api/files");
+    const path = runsHistory[historyIndex] || "";
+    const res = await fetch(`/api/runs/list?path=${encodeURIComponent(path)}`);
     const data = await res.json();
     filesEl.innerHTML = "";
-    
-    if (data.ok && Array.isArray(data.files)) {
-      if (!data.files.length) {
-        filesEl.innerHTML = `<div class="table__row"><div class="muted">No files yet</div><div class="right"></div></div>`;
-        return;
-      }
-      data.files.forEach(rel => {
-        const row = document.createElement("div");
-        row.className = "table__row";
-        const name = document.createElement("div"); name.textContent = rel;
-        const act = document.createElement("div"); act.className = "right";
-        const a = document.createElement("a");
-        a.href = `/api/download?path=${encodeURIComponent(rel)}`;
-        a.className = "btn btn--ghost"; a.textContent = "Download";
-        a.setAttribute("download", "");
-        act.appendChild(a); row.appendChild(name); row.appendChild(act);
-        filesEl.appendChild(row);
-      });
+
+    if (!data.ok) throw new Error("List failed");
+    cwd = data.cwd || "";
+    renderBreadcrumb(cwd);
+
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    if (!entries.length) {
+      filesEl.innerHTML = `<div class="table__row"><div class="muted">Folder is empty</div><div class="right"></div></div>`;
+      return;
     }
-  } catch { /* ignore */ }
+
+    for (const e of entries) {
+      const row = document.createElement("div");
+      row.className = "table__row";
+      const left = document.createElement("div");
+
+      const name = document.createElement("div");
+      name.textContent = e.name + (e.type === "dir" ? "/" : "");
+      name.style.fontWeight = "500";
+      left.appendChild(name);
+
+      const meta = document.createElement("div");
+      meta.className = "muted";
+      const sizeStr = (e.type === "dir") ? "Folder" : formatSize(e.size);
+      const dateStr = e.mtime ? new Date(e.mtime * 1000).toLocaleString() : "";
+      meta.textContent = `${sizeStr}${dateStr ? " • " + dateStr : ""}`;
+      left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      if (e.type === "dir") {
+        const openBtn = document.createElement("button");
+        openBtn.className = "btn btn--ghost";
+        openBtn.textContent = "Open";
+        openBtn.addEventListener("click", () => navigateTo(e.path));
+        right.appendChild(openBtn);
+        name.style.cursor = "pointer";
+        name.addEventListener("click", () => navigateTo(e.path));
+      } else {
+        const a = document.createElement("a");
+        a.href = `/api/runs/download?path=${encodeURIComponent(e.path)}`;
+        a.className = "btn btn--ghost";
+        a.textContent = "Download";
+        a.setAttribute("download", "");
+        right.appendChild(a);
+      }
+
+      row.appendChild(left);
+      row.appendChild(right);
+      filesEl.appendChild(row);
+    }
+  } catch (err) {
+    filesEl.innerHTML = `<div class="table__row"><div class="muted">Failed to load. ${escapeHtml(String(err))}</div><div class="right"></div></div>`;
+  }
 }
+
+function renderBreadcrumb(path) {
+  const parts = path ? path.split('/') : [];
+  const crumbs = ['<span data-path="">runs</span>'];
+  let acc = "";
+  for (const p of parts) {
+    if (!p) continue;
+    acc = acc ? acc + "/" + p : p;
+    crumbs.push('<span class="sep">/</span>');
+    crumbs.push(`<span data-path="${acc}">${p}</span>`);
+  }
+  runsBreadcrumb.innerHTML = crumbs.join("");
+  runsBreadcrumb.querySelectorAll("span[data-path]").forEach(el => {
+    el.addEventListener("click", () => {
+      navigateTo(el.getAttribute("data-path"));
+    });
+  });
+}
+
+function navigateTo(path) {
+  runsHistory = runsHistory.slice(0, historyIndex + 1);
+  runsHistory.push(path || "");
+  historyIndex++;
+  refreshFiles();
+  updateNavButtons();
+}
+
+function goBack() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    refreshFiles();
+    updateNavButtons();
+  }
+}
+function goForward() {
+  if (historyIndex < runsHistory.length - 1) {
+    historyIndex++;
+    refreshFiles();
+    updateNavButtons();
+  }
+}
+function goUp() {
+  const cur = runsHistory[historyIndex] || "";
+  if (!cur) return;
+  const parent = cur.split('/').slice(0, -1).join('/');
+  navigateTo(parent);
+}
+
+function updateNavButtons() {
+  runsBackBtn.disabled = historyIndex <= 0;
+  runsFwdBtn.disabled = historyIndex >= runsHistory.length - 1;
+  runsUpBtn.disabled = !(runsHistory[historyIndex] || "");
+}
+
+function formatSize(bytes) {
+  if (bytes == null) return "";
+  const units = ["B","KB","MB","GB","TB"];
+  let i=0, n=bytes;
+  while (n >= 1024 && i < units.length-1) { n/=1024; i++; }
+  return `${n.toFixed(n<10 && i>0 ? 1 : 0)} ${units[i]}`;
+}
+
 
 /* Validation drawer */
 function openDrawer() {
@@ -203,6 +310,10 @@ inputEl.addEventListener("keydown", (e) => {
 });
 
 refreshBtn.addEventListener("click", refreshFiles);
+runsBackBtn?.addEventListener("click", goBack);
+runsFwdBtn?.addEventListener("click", goForward);
+runsUpBtn?.addEventListener("click", goUp);
+
 
 /* Drawer event wiring */
 openValidationBtn?.addEventListener("click", openDrawer);
@@ -216,3 +327,4 @@ refreshValidationBtn?.addEventListener("click", refreshValidation);
 
 /* Boot */
 refreshFiles();
+updateNavButtons();
