@@ -197,3 +197,56 @@ def api_download(path: str = Query(..., description="Relative path under ACTIVE 
 def api_validation():
     md = _read_active_validation_md()
     return {"ok": True, "md": md or ""}
+
+# === Runs Explorer (entire ./runs directory) ===
+def _runs_root() -> str:
+    base_outputs = _outputs_dir()
+    return os.path.abspath(os.path.join(base_outputs, os.pardir))
+
+def _safe_join_runs(rel: str) -> str:
+    root = _runs_root()
+    rel = rel or ""
+    joined = os.path.abspath(os.path.normpath(os.path.join(root, rel)))
+    if not joined.startswith(root):
+        raise HTTPException(status_code=400, detail="Invalid path.")
+    return joined
+
+@app.get("/api/runs/list")
+def api_runs_list(path: str = Query("", description="Relative path under runs/")):
+    abs_path = _safe_join_runs(path)
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="Path not found.")
+    if not os.path.isdir(abs_path):
+        abs_path = os.path.dirname(abs_path)
+
+    root = _runs_root()
+    cwd_rel = os.path.relpath(abs_path, root).replace('\\','/')
+    parent_rel = None if abs_path == root else os.path.relpath(os.path.dirname(abs_path), root).replace('\\','/')
+
+    entries = []
+    try:
+        for name in os.listdir(abs_path):
+            ap = os.path.join(abs_path, name)
+            try:
+                stat = os.stat(ap)
+                entries.append({
+                    "name": name,
+                    "path": (cwd_rel if cwd_rel != '.' else '') + ('' if cwd_rel in ('', '.') else '/') + name,
+                    "type": "dir" if (os.path.isdir(ap)) else "file",
+                    "size": None if os.path.isdir(ap) else stat.st_size,
+                    "mtime": stat.st_mtime,
+                })
+            except Exception:
+                continue
+        entries.sort(key=lambda e: (e["type"] != "dir", e["name"].lower()))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list: {e}")
+
+    return {"ok": True, "cwd": "" if cwd_rel == "." else cwd_rel, "parent": parent_rel if parent_rel not in ('.','') else "", "entries": entries}
+
+@app.get("/api/runs/download")
+def api_runs_download(path: str = Query(..., description="Relative file path under runs/")):
+    abs_path = _safe_join_runs(path)
+    if not os.path.isfile(abs_path):
+        raise HTTPException(status_code=404, detail="File not found.")
+    return FileResponse(abs_path, filename=os.path.basename(abs_path))
