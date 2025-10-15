@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <meta http-equiv="Cache-Control" content="no-store" />
   <meta charset="utf-8" />
   <title>Synthetic Data Agent</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -52,24 +53,32 @@
           </div>
         </section>
 
-        <!-- Right column: Latest Run Outputs (CSVs) -->
+        
+        <!-- Right column: Runs Explorer -->
         <section class="card card--panel">
           <div class="panel__header">
-            <h2>Generated Outputs</h2>
-            <button id="refreshBtn" class="btn btn--ghost" title="Refresh">↻</button>
+            <h2>Runs Explorer</h2>
+            <div class="right">
+              <button id="runsBackBtn" class="btn btn--ghost" title="Back">◀</button>
+              <button id="runsFwdBtn" class="btn btn--ghost" title="Forward">▶</button>
+              <button id="runsUpBtn" class="btn btn--ghost" title="Up one level">↑</button>
+              <button id="refreshBtn" class="btn btn--ghost" title="Refresh">↻</button>
+            </div>
           </div>
 
+          <div id="runsBreadcrumb" class="breadcrumb"></div>
 
           <div class="table">
             <div class="table__head">
-              <div>File</div>
+              <div>Name</div>
               <div class="right">Action</div>
             </div>
             <div id="files" class="table__body"><!-- rows injected by app.js --></div>
           </div>
 
-          <div class="panel__note">Only the latest run’s CSVs are shown.</div>
+          <div class="panel__note">Browse everything inside <code>runs/</code>. Folders are not downloadable—click a folder to open it.</div>
         </section>
+
       </div>
     </main>
 
@@ -96,6 +105,6 @@
   </div>
 
   <!-- cache-bust to avoid stale JS -->
-  <script src="/static/app.js?v=5"></script>
+  <script src="/static/app.js?v=20251015-3"></script>
 </body>
 </html>
