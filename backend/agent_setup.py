@@ -438,7 +438,7 @@ Produce:
    - "motherduck_query" It is separately defined from mcp_tools to query in Motherduck 
 6) **No Hidden Assumptions**: All assumptions must be written to `generation_spec.md`.
 7) Always try to resolve this error "Error executing tool query" by using sql with motherduck_query defined separately from mcp_tools.
-8) If final answers is in json then convert and return that answer in English.
+8) Always return final answers in Pure English If final answers is in json then convert and return that answer in English.
 9) Auto Handle any errors during process by taking correct steps and using better logic and ways.
 
 # Directory Convention
