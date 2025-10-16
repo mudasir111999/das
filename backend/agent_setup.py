@@ -413,7 +413,7 @@ User can Also do questions from you about the data stored any where, you have to
 
 {datasources_block}
 
-Ask user the task By saying this exact question "What is the schema and requirements or you want to validate the data?" then stop and show this in final answer then after when user gives the prompt then complete the whole given process.
+Start by asking user the task by asking this exact question "What is the schema and requirements or you want to validate the data?" then immediately stop and return this in final answer then after when user gives the prompt then complete the whole given process.
 If user ask anything else use proper listed tools and answer those appropriately.
 
 # Primary Objective
